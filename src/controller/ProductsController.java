@@ -7,10 +7,12 @@ import java.io.IOException;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
+import javafx.scene.control.Button;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
 import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.scene.input.MouseEvent;
 import model.Fly;
 import repository.ProdutosRepository;
 
@@ -48,6 +50,12 @@ public class ProductsController {
 	private ProdutosRepository repoProduto;
 	
 	@FXML
+	private Button adicionarBtn;
+	
+	@FXML
+	private Button limparBtn;
+	
+	@FXML
 	public void initialize() {
 		//iniciando com o valor default da celula (cell)
 		cProduto.setCellValueFactory(new PropertyValueFactory<>("produto"));
@@ -65,7 +73,23 @@ public class ProductsController {
 		
 		//Preencher lista
 		carregarDadosSalvos();
+		
+		tableView.setOnMouseClicked(this::clicouComOMouse);
 	}
+	
+	private void clicouComOMouse(MouseEvent event) {
+		Fly selectedFly = tableView.getSelectionModel().getSelectedItem();
+		if(selectedFly != null) {
+			produto.setText(selectedFly.getProduto());
+			preco.setText(selectedFly.getPreco() + "");
+			quantidade.setText(selectedFly.getQuantidade() + "" );
+			codigo.setText(selectedFly.getCodigo() + "");
+			
+			adicionarBtn.setText("Editar");
+			limparBtn.setText("Limpar");
+		}
+	}
+	
 
 	public void carregarDadosSalvos() {
 		try (BufferedReader br = new BufferedReader(new FileReader("database-pro.txt"))) {
@@ -95,8 +119,19 @@ public class ProductsController {
 		fly.setPreco(Double.parseDouble(preco.getText()));
 		fly.setQuantidade(Integer.parseInt(quantidade.getText()));
 		fly.setCodigo(Integer.parseInt(codigo.getText()));
-		repoProduto.addFly(fly);
+		
+		if(adicionarBtn.getText().equals("Adicionar")) {
+			repoProduto.addFly(fly);
+		} else {
+			Fly selectedFly = tableView.getSelectionModel().getSelectedItem();
+			selectedFly.setProduto(fly.getProduto());
+			selectedFly.setPreco(fly.getPreco());
+			selectedFly.setQuantidade(fly.getQuantidade());
+			selectedFly.setCodigo(fly.getCodigo());
+		}
+		
 		clearProducts();
+		
 	}
 	
 	public void clearProducts() {
@@ -107,6 +142,16 @@ public class ProductsController {
 	}
 
 	public void limpar() {
-		clearProducts();
+		if(limparBtn.getText().equals("Limpar")) {
+			clearProducts();
+		} else {
+			Fly selectedFly = tableView.getSelectionModel().getSelectedItem();
+			if(selectedFly != null){
+				data.remove(selectedFly);
+				repoProduto.deleteFly(selectedFly.getId());
+				clearProducts();
+			}
+		}
+		
 	}
 }
